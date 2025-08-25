@@ -3,6 +3,7 @@ import * as userService from "../services/user.services.js";
 import {validationResult} from 'express-validator'; 
 import redisClient from '../services/redis.servces.js'
 
+
 export const createUserController = async(req,res)=>{
          
     const errors = validationResult(req);
@@ -12,9 +13,9 @@ export const createUserController = async(req,res)=>{
         return res.status(400).json({errors: errors.array()});
     }
     try{ 
-        
+      
         const user = await userService.createUser(req.body);
-         
+        delete user._doc.password;
         const token = await user.generateJWT();
 
       return  res.status(201).send({user,token});
@@ -34,16 +35,17 @@ export const loginController = async(req,res)=>{
      try{
         const {email,password} = req.body;
         const user = await userModel.findOne({email});
-
+       
         if(!user){
             return res.status(401).json({errors: 'Invalid credentials'});
         }
-
-        const isMatch = user.isValidPassword(password);
+         
+        const isMatch = await user.isValidPassword(password);
+        
         if(!isMatch){
             return res.status(401).json({errors: 'Invalid credentials'});
         }
-        
+        delete user._doc.password;
         const token = await user.generateJWT();
          
         return res.status(200).json({user,token});
