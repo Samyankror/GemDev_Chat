@@ -14,7 +14,6 @@ function Login() {
          e.preventDefault();
          axios.post('/users/login',formData)
          .then((res)=>{
-            console.log(res);
             localStorage.setItem('token',res.data.token);
             setUser(res.data.user);
              navigate('/');
