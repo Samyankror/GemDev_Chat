@@ -17,5 +17,7 @@ router.put('/add-user',
              body('users').isArray({min:1}).withMessage('User must be an array of String'),
              projectController.addUserToProject
 )
+router.get('/get-project/:projectId', authUser, projectController.getProjectById);
+
 
 export default router;

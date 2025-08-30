@@ -25,11 +25,11 @@ export const createProject = async (req, res) => {
 export const getAllProject = async (req, res) => {
   try {
     const loggedInUser = await userModel.findOne({ email: req.user.email });
-
+      
     const allProjects = await projectService.getAllProjectByUserId({
-      userId: loggedInUser._id,
+      userId: loggedInUser.id,
     });
-
+     
     return res.status(200).json({ projects: allProjects });
   } catch (error) {
     return res.status(400).json({ error: err.message });
@@ -58,3 +58,16 @@ export const addUserToProject = async (req, res) => {
     return res.status(400).json({ error: error.message });
   }
 };
+
+export const getProjectById = async(req,res)=>{
+
+    try{
+       const projectId = req.params.projectId;
+    console.log(projectId);
+       const project = await  projectService.getProject({projectId});
+        
+       return res.status(200).json({project});
+    }catch(error){
+      return res.status(400).json({error:error.message});
+    }
+}

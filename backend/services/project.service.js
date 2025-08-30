@@ -9,27 +9,22 @@ export const createProject = async({name,userId})=>{
    if(!userId){
      throw new Error('UserId is required');
    }
-   try{
+  
      const  project =  projectModel.create({name,users:[userId]});
      return project;
    }
-   catch(error){
-    throw error;
-   }
+   
 
-}
+
 
 export const getAllProjectByUserId = async({userId})=>{
   if(!userId){
      throw new Error("UserId is reuired");
   }
 
-   try{
    const allUserProjects = await projectModel.find({users:userId});
    return allUserProjects;
-   } catch(error){
-     throw error;
-   }
+   
 }
 
 export const addUsersToProject = async({projectId,users,userId})=>{
@@ -54,7 +49,7 @@ export const addUsersToProject = async({projectId,users,userId})=>{
       if(!mongoose.Types.ObjectId.isValid(userId)){
         throw new Error('Invalid userId');
       }
-       try{
+       
          
       const project = await projectModel.findOne({_id:projectId, users : userId});
       if(!project){
@@ -74,7 +69,22 @@ export const addUsersToProject = async({projectId,users,userId})=>{
           new:true
          })
          return updatedProject;
-       }catch(error){
-        throw error;
-       }
+
+}
+
+export const getProject = async({projectId})=>{
+  if(!projectId){
+    throw new Error('projectId is required');
+  }
+
+  if(!mongoose.Types.ObjectId.isValid(projectId)){
+      throw new Error('projectId is invalid');
+  }
+  
+  const project = await projectModel.findOne({
+              _id: projectId
+              }).populate('users');
+ 
+    return project;
+      
 }

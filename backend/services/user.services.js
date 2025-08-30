@@ -14,13 +14,11 @@ export const createUser = async({email,password})=>{
 }
 
 export const getAllUsers = async({userId})=>{
-    try{
+   
         const allUsers = await userModel.find(
             {_id :
                  { $ne: userId}
                 });
         return allUsers;
-    }catch(error){
-        throw error;
-    }
+    
 }

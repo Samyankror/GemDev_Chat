@@ -3,10 +3,9 @@ import redisClient from '../services/redis.servces.js';
 
 export const authUser = async(req,res,next)=>{
     try{
-      console.log("ht");
+      
      const token = req.cookies.token || req.headers.authorization.split(' ')[1];
-      console.log(token);
-     
+      
      if(!token){
         return req.status(401).send({error:'Unauthorized User'});
      }

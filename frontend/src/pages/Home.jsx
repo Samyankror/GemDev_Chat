@@ -1,11 +1,18 @@
 import { useContext, useState } from 'react';
 import { UserContext } from '../context/User.Context.jsx';
 import axios from '../config/axios.js';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 function Home(){
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [projectName,setProjectName] = useState('');
+      const [projects,setProjects] = useState(null);
+      const [error,setError] = useState(null);
+       const navigate = useNavigate();
+
+      
       const createProject = (e)=>{
            e.preventDefault();
            
@@ -21,17 +28,42 @@ function Home(){
               setProjectName('');
 
       }
-
+   useEffect(()=>{
+         axios.get('/project/all')
+              .then((res)=>{
+                console.log(res.data.projects);
+                setProjects(res.data.projects);
+              })
+              .catch((error)=>{
+                   setError(error);
+              })
+      },[])
     return (
          <main className='p-4'>
-          <div>
+          <div className='flex  gap-6'>
             <button 
             className='p-4 border-slate-300 text-xl border-2 rounded-md font-semibold cursor-pointer'
             onClick={()=>setIsModalOpen(true)}>
               New Project
             <i className="ri-link"></i>
             </button>
+
+            {projects &&
+              projects.map((project)=>(<div 
+               key={project._id}
+               className='min-w-52 p-4 text-xl border-slate-300 border-2 rounded-md font-semibold cursor-pointer hover:bg-slate-200'
+               onClick={()=>navigate('project',{state : {project}})}
+             >
+              <h2>{project.name}   </h2>
+               <div>
+                  <p> <small> <i className="ri-user-line"></i> Collaborators</small> : {project.users.length}</p>
+                </div>          
+            </div>
+            ))}
+
           </div>
+
+          
               
               {isModalOpen && (
                 <div className='fixed inset-0 flex justify-center items-center bg-slate-100'>
