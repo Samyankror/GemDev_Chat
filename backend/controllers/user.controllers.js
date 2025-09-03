@@ -80,7 +80,7 @@ export const  getAllUserController = async(req,res)=>{
         const loggedInUser  = await userModel.findOne({email:req.user.email});
        
         const allUsers = await  userService.getAllUsers({userId: loggedInUser.id});
-        
+         
         return res.status(200).json({allUsers});
      }
      catch(error){

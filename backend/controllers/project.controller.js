@@ -63,7 +63,7 @@ export const getProjectById = async(req,res)=>{
 
     try{
        const projectId = req.params.projectId;
-    console.log(projectId);
+    
        const project = await  projectService.getProject({projectId});
         
        return res.status(200).json({project});

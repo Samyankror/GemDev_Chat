@@ -31,7 +31,6 @@ function Home(){
    useEffect(()=>{
          axios.get('/project/all')
               .then((res)=>{
-                console.log(res.data.projects);
                 setProjects(res.data.projects);
               })
               .catch((error)=>{
