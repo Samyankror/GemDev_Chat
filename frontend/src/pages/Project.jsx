@@ -12,7 +12,19 @@ function Project(){
   const [users,setUsers] = useState([]);
   
 
- 
+  const addCollaborators = ()=>{
+        setIsModalOpen(false)
+        axios.put('/project/add-user',{
+          projectId: location.state.project._id,
+          users: Array.from(selectedUserId),
+        })
+        .then((res)=>{
+              console.log(res);
+        })
+        .catch((error)=>{
+        console.log(error);
+      })
+  }
 
   const handleUserClick = (id)=>{
      setSelectedUserId((prev)=>{
@@ -151,7 +163,7 @@ function Project(){
                           </ul>
                           <button 
                           className='font-semibold text-lg cursor-poiter bg-blue-400 p-1 text-white cursor-pointer rounded-md mx-auto py-2 px-3'
-                          >
+                          onClick={()=>addCollaborators()}>
                             Add Collaborators
                             </button>
                      </div>
