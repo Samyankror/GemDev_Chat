@@ -1,12 +1,12 @@
 import { useLocation } from "react-router-dom";
-import { useState,useEffect, useContext } from "react";
+import { useState,useEffect, useContext, useRef } from "react";
 import axios from "../config/axios";
 import { initializeSocket, recieveMessage, sendMessage } from "../config/socket";
 import { UserContext } from "../context/User.Context";
 
 function Project(){
    const location = useLocation();
-
+    const ref = useRef();
    const [project, setProject] = useState(location.state?.project);
    const [isSidePanelOpen,setIsSidePanelOpen] = useState(false);
    const [isModalOpen,setIsModalOpen] = useState(false);
@@ -93,6 +93,7 @@ function Project(){
                     <p className='text-sm font-semibold'>${userMessage}</p>
                      `;
           messageBox.appendChild(message);
+          scrollTopToBottom();
   }
 
   function appendIncomingMessage(objectMessage){
@@ -106,8 +107,12 @@ function Project(){
                     <p className='text-sm font-semibold'>${objectMessage.message}</p>
                      `;
           messageBox.appendChild(message);
+         scrollTopToBottom();
+
   }
-  
+   function scrollTopToBottom(){
+    ref.current.scrollTop = ref.current.scrollHeight;
+   }
   
    return (
       <main className={`w-screen h-screen flex`}>
@@ -127,7 +132,7 @@ function Project(){
                   </header>
 
                  
-                           <div className='message-box flex mt-1 flex-col px-1 pt-1 pb-3 gap-2 overflow-auto  flex-10 '>
+                           <div  ref={ref} className='message-box flex mt-1 flex-col px-1 pt-1 pb-3 gap-2 overflow-auto  flex-10 '>
                             
                                 {/* message display here */}
                            </div>  

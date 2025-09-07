@@ -52,8 +52,12 @@ io.on('connection',(socket)=>{
     socket.join(socket.roomId);
     socket.on('project-message',async(data)=>{
         const user = await userModel.findById(data.sender)
-        console.log(user);
         socket.broadcast.to(socket.roomId).emit('project-message',{message:data.message,email:user.email});
+    })
+
+    socket.on('disconnect',()=>{
+        console.log('user disconnected');
+        socket.leave(socket.roomId);
     })
 })
 server.listen(process.env.PORT,()=>{
