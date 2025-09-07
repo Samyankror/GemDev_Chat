@@ -1,7 +1,8 @@
 import { useLocation } from "react-router-dom";
-import { useState,useEffect } from "react";
+import { useState,useEffect, useContext } from "react";
 import axios from "../config/axios";
-import { initializeSocket } from "../config/socket";
+import { initializeSocket, recieveMessage, sendMessage } from "../config/socket";
+import { UserContext } from "../context/User.Context";
 
 function Project(){
    const location = useLocation();
@@ -11,6 +12,9 @@ function Project(){
    const [isModalOpen,setIsModalOpen] = useState(false);
   const  [selectedUserId, setSelectedUserId] = useState(new Set());
   const [users,setUsers] = useState([]);
+  const [message,setMessage] = useState('');
+
+  const { user } = useContext(UserContext);
   
 
   const addCollaborators = ()=>{
@@ -39,11 +43,23 @@ function Project(){
      return newSet;
      })
   }
+  const send = ()=>{
+     appendOutgoingMessage(message);
+      sendMessage('project-message',{
+        message,
+        sender: user._id
+      })
+      setMessage('');
+  }
 
+   
   useEffect(()=>{
      
-    initializeSocket();
-     
+    initializeSocket(location.state.project._id);
+     recieveMessage('project-message',(data)=>{
+      console.log(data);
+      appendIncomingMessage(data);
+     })
     axios.get(`/project/get-project/${location.state.project._id}`)
       .then((res)=>{
           setProject(res.data.project);
@@ -66,13 +82,37 @@ function Project(){
       })
   },[])
 
-  
+  function appendOutgoingMessage(userMessage){
+     const messageBox = document.querySelector('.message-box');
+     const message = document.createElement('div');
+     message.classList.add('flex', 'flex-col', 'gap-1', 'p-2', 'max-w-64','ml-auto', 'bg-slate-50', 'rounded-md');
+     message.innerHTML=`
+                     <small className='text-sm opacity-70'>
+                                       ${user.email}
+                                     </small>
+                    <p className='text-sm font-semibold'>${userMessage}</p>
+                     `;
+          messageBox.appendChild(message);
+  }
+
+  function appendIncomingMessage(objectMessage){
+     const messageBox = document.querySelector('.message-box');
+     const message = document.createElement('div');
+     message.classList.add('flex', 'flex-col', 'gap-1', 'p-2', 'max-w-64', 'bg-slate-50', 'rounded-md');
+     message.innerHTML=`
+                     <small className='text-sm opacity-70'>
+                                       ${objectMessage.email}
+                                     </small>
+                    <p className='text-sm font-semibold'>${objectMessage.message}</p>
+                     `;
+          messageBox.appendChild(message);
+  }
   
   
    return (
       <main className={`w-screen h-screen flex`}>
              <section className='relative flex flex-col min-w-80 h-screen bg-slate-300'>
-                  <header className='flex justify-between items-center p-3  bg-rose-200 '>
+                  <header className='flex justify-between items-center p-3  bg-rose-200 flex-0.5 '>
                     <button 
                     className='flex font-semibold cursor-pointer'
                       onClick={()=>setIsModalOpen(true)}
@@ -86,29 +126,22 @@ function Project(){
                         </button>
                   </header>
 
-                  <div className='flex flex-col'>
-                           <div className='flex flex-col p-1 gap-1'>
+                 
+                           <div className='message-box flex mt-1 flex-col px-1 pt-1 pb-3 gap-2 overflow-auto  flex-10 '>
                             
-                                 <div className="message flex flex-col gap-1 p-2 max-w-64 bg-slate-50 rounded-md ">
-                                     <small className='text-sm'>
-                                       example@gmail.com
-                                     </small>
-                                     <p className='text-sm w-full'>Lorem, ipsum dolor sit amet consectetur </p>
-                                 </div>
-                                 <div className="message flex flex-col gap-1 p-2 max-w-64 bg-slate-50 rounded-md ">
-                                     <small className='text-sm'>
-                                       example@gmail.com
-                                     </small>
-                                     <p className='text-sm'>Lorem, ipsum dolor sit amet consectetur </p>
-                                 </div>
+                                {/* message display here */}
                            </div>  
-                  </div>
-                   <div className='flex w-full   absolute bottom-0'>
+                  
+                   <div className='flex    flex-0.5'>
                                 <input 
                                 type="text"
+                                value={message}
+                                onChange={(e)=>setMessage(e.target.value)}
                                 placeholder='Enter Message'
-                                className='p-3 px-4 bg-white outline-none flex-grow'  />
-                                <button className='px-4 bg-slate-950 text-white'>
+                                className='p-3 px-4 bg-white outline-none  flex-grow'  />
+                                <button 
+                                onClick={()=>send()}
+                                className='px-4 bg-slate-950 text-white cursor-pointer'>
                                  <i className="ri-send-plane-fill text-2xl"></i>
                                 </button> 
                   </div>
