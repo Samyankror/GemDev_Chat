@@ -19,7 +19,7 @@ function Home(){
            axios.post('/project/create',
             {name : projectName})
              .then((res)=>{
-                  console.log(res);
+                  
                   setIsModalOpen(false);
              })
              .catch((error)=>{

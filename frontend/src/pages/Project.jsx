@@ -1,12 +1,13 @@
 import { useLocation } from "react-router-dom";
 import { useState,useEffect, useContext, useRef } from "react";
-import axios from "../config/axios";
-import { initializeSocket, recieveMessage, sendMessage } from "../config/socket";
-import { UserContext } from "../context/User.Context";
+import axios from "../config/axios.js";
+import { initializeSocket, recieveMessage, sendMessage } from "../config/socket.js";
+import { UserContext } from "../context/User.Context.jsx";
+import Markdown from 'markdown-to-jsx'
 
 function Project(){
    const location = useLocation();
-    const ref = useRef();
+    const messageBoxRef = useRef();
    const [project, setProject] = useState(location.state?.project);
    const [isSidePanelOpen,setIsSidePanelOpen] = useState(false);
    const [isModalOpen,setIsModalOpen] = useState(false);
@@ -14,22 +15,14 @@ function Project(){
   const [users,setUsers] = useState([]);
   const [message,setMessage] = useState('');
 
-  const { user } = useContext(UserContext);
+  const [messages,setMessages] = useState([]);
   
+   const [fileTree, setFileTree] = useState({});
+  const { user } = useContext(UserContext);
+  const [openFiles,setOpenFiles] = useState([]);
+  const [currentFile, setCurrentFile] = useState(null);
 
-  const addCollaborators = ()=>{
-        setIsModalOpen(false)
-        axios.put('/project/add-user',{
-          projectId: location.state.project._id,
-          users: Array.from(selectedUserId),
-        })
-        .then((res)=>{
-              console.log(res);
-        })
-        .catch((error)=>{
-        console.log(error);
-      })
-  }
+  
 
   const handleUserClick = (id)=>{
      setSelectedUserId((prev)=>{
@@ -43,23 +36,69 @@ function Project(){
      return newSet;
      })
   }
+  const addCollaborators = ()=>{
+       
+        axios.put('/project/add-user',{
+          projectId: location.state.project._id,
+          users: Array.from(selectedUserId),
+        })
+        .then((res)=>{
+            setIsModalOpen(false)
+        })
+        .catch((error)=>{
+        console.log(error);
+      })
+  }
   const send = ()=>{
-     appendOutgoingMessage(message);
       sendMessage('project-message',{
         message,
         sender: user._id
       })
+      setMessages(prevMessages=>[...prevMessages,{email: user.email,message}])
       setMessage('');
   }
+   function writeAiMessage(message){
+    //const messageObject = message;
+    //  console.log(message)
+    return (
+       <div
+                className='overflow-auto bg-slate-950 text-white rounded-sm p-2 '
+            >
+                <Markdown
+                    children={message}
+                    // options={{
+                    //     overrides: {
+                    //         code: SyntaxHighlightedCode,
+                    //     },
+                    // }}
+                />
+            </div>
+    )
+   }
+
+  
 
    
   useEffect(()=>{
      
-    initializeSocket(location.state.project._id);
+    initializeSocket(project._id);
      recieveMessage('project-message',(data)=>{
-      console.log(data);
-      appendIncomingMessage(data);
+      
+        
+        // if(data.fileTree){
+          // console.log(data.fileTree);
+          // console.log(typeof data.fileTree,"hello");
+          // setFileTree(data.fileTree);
+        //  setFileTree(data.fileTree );
+          
+        // }
+        const Inmessage = JSON.parse(data.message);
+        console.log(Inmessage);
+        setMessages(prev => [...prev, data]);
+       if(Inmessage.fileTree) setFileTree(Inmessage.fileTree);
+      // appendIncomingMessage(data);
      })
+
     axios.get(`/project/get-project/${location.state.project._id}`)
       .then((res)=>{
           setProject(res.data.project);
@@ -81,42 +120,18 @@ function Project(){
         console.log(error);
       })
   },[])
+ 
+ 
 
-  function appendOutgoingMessage(userMessage){
-     const messageBox = document.querySelector('.message-box');
-     const message = document.createElement('div');
-     message.classList.add('flex', 'flex-col', 'gap-1', 'p-2', 'max-w-64','ml-auto', 'bg-slate-50', 'rounded-md');
-     message.innerHTML=`
-                     <small className='text-sm opacity-70'>
-                                       ${user.email}
-                                     </small>
-                    <p className='text-sm font-semibold'>${userMessage}</p>
-                     `;
-          messageBox.appendChild(message);
-          scrollTopToBottom();
-  }
-
-  function appendIncomingMessage(objectMessage){
-     const messageBox = document.querySelector('.message-box');
-     const message = document.createElement('div');
-     message.classList.add('flex', 'flex-col', 'gap-1', 'p-2', 'max-w-64', 'bg-slate-50', 'rounded-md');
-     message.innerHTML=`
-                     <small className='text-sm opacity-70'>
-                                       ${objectMessage.email}
-                                     </small>
-                    <p className='text-sm font-semibold'>${objectMessage.message}</p>
-                     `;
-          messageBox.appendChild(message);
-         scrollTopToBottom();
-
-  }
-   function scrollTopToBottom(){
-    ref.current.scrollTop = ref.current.scrollHeight;
-   }
+ 
+  useEffect(()=>{
+    messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+  },[messages]);
+  
   
    return (
       <main className={`w-screen h-screen flex`}>
-             <section className='relative flex flex-col min-w-80 h-screen bg-slate-300'>
+             <section className='left relative flex flex-col min-w-96 h-screen bg-slate-300'>
                   <header className='flex justify-between items-center p-3  bg-rose-200 flex-0.5 '>
                     <button 
                     className='flex font-semibold cursor-pointer'
@@ -132,9 +147,20 @@ function Project(){
                   </header>
 
                  
-                           <div  ref={ref} className='message-box flex mt-1 flex-col px-1 pt-1 pb-3 gap-2 overflow-auto  flex-10 '>
+                           <div  ref={messageBoxRef} className='message-box flex mt-1 flex-col px-1 pt-1 pb-3 gap-2 overflow-auto  flex-10 '>
                             
-                                {/* message display here */}
+                           {  messages.map((msg,index)=>(
+                                
+                                <div key={index} className={`flex flex-col gap-1 p-2 max-w-80 bg-slate-50 rounded-md  ${user.email===msg.email ? 'ml-auto' : 'mr-auto'}`}>
+                                <small className='text-sm opacity-70'>{msg.email}</small>
+
+                                   {msg.email === 'ai' ? (
+      writeAiMessage(msg.message)  
+    ) : (
+      <p className="text-sm font-semibold">{msg.message}</p>
+    )}
+                                 </div>
+                           ))}
                            </div>  
                   
                    <div className='flex    flex-0.5'>
@@ -173,6 +199,54 @@ function Project(){
                             ))}
                       </div>
                   </div>
+             </section>
+
+             <section className='right  bg-red-50 flex-grow h-full flex'>
+               <div className="explorer h-full max-w-64 min-w-52  bg-slate-200">
+                   <div className='file-tree'>
+                    {
+                      Object.keys(fileTree).map((file,index)=>(
+                      <div 
+                      className='tree-element cursor-pointer p-2 bg-slate-300' 
+                      onClick={()=>{
+                        setCurrentFile(file)
+                        setOpenFiles([ ...new Set([ ...openFiles, file ]) ])
+                        }}>
+                     <p className=' font-semibold text-lg'>{file}</p>
+                     </div>
+                    ))}
+                   </div>
+               </div>
+                
+               {openFiles && ( 
+               <div className='code-editor flex flex-col flex-grow'>
+                    <div className='top p-2 bg-red-200 flex gap-4'>
+                    {openFiles.map((file,index)=>(
+                         <button 
+                          onClick={()=>setCurrentFile(file)}
+                          className='text-lg font-semibold '>{file}</button>
+                    ))}
+                      </div>
+                    <div className='bottom flex flex-grow bg-white'>
+                    { fileTree[currentFile] && (
+                      <textarea 
+   value={fileTree[currentFile].file.contents}
+   onChange={(e) => {
+     setFileTree(prev => ({
+       ...prev,
+       [currentFile]: {
+          file :{
+         contents: e.target.value
+          },
+       }
+     }));
+   }}
+   className='w-full h-full '
+/>
+                     )}
+                    </div>
+               </div>
+               )}
              </section>
 
              {isModalOpen && (
