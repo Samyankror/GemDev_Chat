@@ -1,29 +1,50 @@
 import { Link,useNavigate } from 'react-router-dom';
 import { useState, useContext } from 'react';
-import axios from '../config/axios';
-import { UserContext } from '../context/User.Context.jsx';
+import {  useDispatch,useSelector } from 'react-redux';
+import { signInFailure, signInStart,signInSuccess } from '../redux/user/userSlice.js';
+import { fetchWithAuth } from '../utils/fetchWithAuth.js';
 
 function Register() {
      const navigate = useNavigate();
+     const {loading} = useSelector(state=>state.user);
+     const [error,setError] = useState(null);
      const [formData,setFormData] = useState({});
-      const {setUser} = useContext(UserContext);
+      const dispatch = useDispatch();
+
      const handleChange=(e)=>{
         setFormData({...formData,[e.target.id]:e.target.value})
      }
+    
+
     const handleSubmit = async(e)=>{
          e.preventDefault();
-         axios.post('/users/register',formData)
-         .then((res)=>{
-           console.log(res);
-           localStorage.setItem('token',res.data.token);
-           setUser(res.data.user);
-           navigate('/');
-         })
-         .catch((error)=>{
-            console.log(error.response.data);
-        })
-    }
 
+        try{
+          dispatch(signInStart());
+         const data = await fetchWithAuth('/api/user/register',{
+            method:'POST',
+            headers : {
+           "Content-Type" : "application/json",
+            },
+            body:JSON.stringify(formData)
+         })
+
+        
+          if(data.success){
+               dispatch(signInSuccess(data.user));
+               setError(null);
+             }
+             else{
+              dispatch(signInFailure());
+              setError(data.message);
+             }
+             navigate('/')
+
+        }catch(error){
+             dispatch(signInFailure());
+            setError(error.message);
+        }
+    }
   return (
     <div
       className="flex items-center justify-center min-h-screen bg-cover bg-center bg-slate-800"
@@ -31,6 +52,18 @@ function Register() {
 <div className="w-[90%] max-w-md backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white">
         <h2 className="text-3xl font-semibold mb-6 text-center text-white">Register</h2>
         <form onSubmit = {handleSubmit} className='flex flex-col gap-4'>
+        <div className="">
+            <label className="block  font-semibold mb-2 text-white" htmlFor="username">
+              UserName
+            </label>
+            <input
+              type="text"
+              id="username"
+               onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-white"
+              placeholder="Enter your username"
+            />
+          </div>
              
           <div className="">
             <label className="block  font-semibold mb-2 text-white" htmlFor="email">
@@ -58,9 +91,9 @@ function Register() {
           </div>
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xl font-semibold py-2 rounded-lg hover:from-indigo-600 hover:to-purple-600 transition duration-300 flex justify-center items-center gap-2"
+            className="w-full bg-gradient-to-r cursor-pointer from-blue-500 to-indigo-600 text-white text-xl font-semibold py-2 rounded-lg hover:from-indigo-600 hover:to-purple-600 transition duration-300 flex justify-center items-center gap-2"
           >
-            Sign up
+           {loading ? 'Loading' : 'Register'} 
           </button>
         </form>
 
@@ -72,6 +105,8 @@ function Register() {
             Login 
           </Link>
         </p>
+
+        {error && <p className='text-red-700 mt-2'>{error}</p>}
       </div>
     </div>
   );

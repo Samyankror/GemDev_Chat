@@ -1,5 +1,4 @@
-import { useContext, useState } from 'react';
-import { UserContext } from '../context/User.Context.jsx';
+import { useState } from 'react';
 import axios from '../config/axios.js';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -13,23 +12,20 @@ function Home(){
        const navigate = useNavigate();
 
       
-      const createProject = (e)=>{
-           e.preventDefault();
-           
-           axios.post('/project/create',
-            {name : projectName})
-             .then((res)=>{
-                  
-                  setIsModalOpen(false);
-             })
-             .catch((error)=>{
-                
-             })
-              setProjectName('');
-
-      }
+  //     const createProject = (e)=>{
+  //          e.preventDefault();
+  //          axios.post('/api/project/create',
+  //           {name : projectName})
+  //            .then((res)=>{
+  //                 setIsModalOpen(false);
+  //            })
+  //            .catch((error)=>{
+  //                setIsModalOpen(false);
+  //            })
+  //             setProjectName('');
+  //     }
    useEffect(()=>{
-         axios.get('/project/all')
+         axios.get('/api/project/all')
               .then((res)=>{
                 setProjects(res.data.projects);
               })
@@ -37,6 +33,26 @@ function Home(){
                    setError(error);
               })
       },[])
+   
+    const createProject = async(e)=>{
+      e.preventDefault();
+      try{
+      const res = await fetch('/api/project/create',{
+                   method:'POST',
+            headers : {
+           "Content-Type" : "application/json",
+            },
+            body:JSON.stringify({name: projectName})
+      })
+
+      const data = await res.json();
+      console.log(data);
+    }catch(error){
+      console.log("hello");
+    }
+    }
+   
+  
     return (
          <main className='p-4'>
           <div className='flex  gap-6'>
@@ -87,11 +103,13 @@ function Home(){
                       setIsModalOpen(false);
                       setProjectName('');
                     }}
-                    className='py-2 px-4 bg-slate-500 rounded-lg text-white font-semibold text-xl'
+                    className='py-2 px-4 bg-slate-500 rounded-lg text-white cursor-pointer font-semibold text-xl'
                     >
                       Cancel
                       </button>
-                    <button type='submit' className='py-2 px-4 bg-blue-400 rounded-lg text-white font-semibold text-xl'>Create</button>
+                    <button 
+                    type='submit' 
+                     className='py-2 px-4 bg-blue-400 rounded-lg cursor-pointer text-white font-semibold text-xl'>Create</button>
                     </div>
                      </form>
                   </div>

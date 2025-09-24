@@ -7,6 +7,7 @@ const router = Router();
 
 router.post(
   "/register",
+  body("username").isString().withMessage('username must be valid'),
   body("email").isEmail().withMessage("Email must be a valid email address"),
   body("password")
     .isLength({ min: 3 })
@@ -23,6 +24,7 @@ router.post(
   userController.loginController
 );
 
+router.get('/getAccess',userController.generteNewAccessToken)
 router.get("/profile", authUser, userController.profileController);
 router.get("/logout", authUser, userController.logoutController);
 router.get("/all", authUser, userController.getAllUserController);

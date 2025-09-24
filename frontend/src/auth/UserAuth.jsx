@@ -1,33 +1,12 @@
-import { useEffect, useContext, useState} from "react";
-import { useNavigate } from "react-router-dom";
-import { UserContext } from "../context/User.Context";
+import { useSelector} from 'react-redux';
+import { Navigate, Outlet } from 'react-router-dom'
 
-
-
-function UserAuth({children}){
-    const {user} = useContext(UserContext);
-    const token = localStorage.getItem('token');
-    const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
-
-    useEffect(()=>{
-        if(user){
-            setLoading(false);
-        }
-        if(!token){
-            navigate('/login');
-        }
-        if(!user){
-            navigate('/login');
-        }
-    })
-    if(loading){
-        return <div>loading...</div>
-    }
-    return (
-       <>
-       {children}
-       </>
+function UserAuth({}){
+  const {currUser} = useSelector(state => state.user)
+    return(
+     
+        currUser ? <Outlet /> : <Navigate to='/login' />
+    
     )
 }
 

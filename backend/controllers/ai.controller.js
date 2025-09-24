@@ -6,6 +6,6 @@ export const getResult = async(req,res)=>{
      const result = await generateContent(prompt);
      return res.send(result);
     }catch(error){
-        return res.status(500).send({message: error.message});
+       next(error);
     }
 }

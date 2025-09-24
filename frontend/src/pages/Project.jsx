@@ -4,6 +4,8 @@ import axios from "../config/axios.js";
 import { initializeSocket, recieveMessage, sendMessage } from "../config/socket.js";
 import { UserContext } from "../context/User.Context.jsx";
 import Markdown from 'markdown-to-jsx'
+import { useSelector} from 'react-redux';
+// import { getWebContainer } from "../config/webContainer.js";
 
 function Project(){
    const location = useLocation();
@@ -18,11 +20,12 @@ function Project(){
   const [messages,setMessages] = useState([]);
   
    const [fileTree, setFileTree] = useState({});
-  const { user } = useContext(UserContext);
+   const {currUser} = useSelector(state => state.user)
   const [openFiles,setOpenFiles] = useState([]);
   const [currentFile, setCurrentFile] = useState(null);
-
-  
+  // const [webContainer, setWebContainer] = useState(null);
+  // const [iframeUrl,setIframeUrl] = useState(null);
+  const [runProcess, setRunProcess] = useState(null);
 
   const handleUserClick = (id)=>{
      setSelectedUserId((prev)=>{
@@ -38,7 +41,7 @@ function Project(){
   }
   const addCollaborators = ()=>{
        
-        axios.put('/project/add-user',{
+        axios.put('/api/project/add-user',{
           projectId: location.state.project._id,
           users: Array.from(selectedUserId),
         })
@@ -49,12 +52,14 @@ function Project(){
         console.log(error);
       })
   }
+  console.log(currUser);
   const send = ()=>{
+
       sendMessage('project-message',{
         message,
-        sender: user._id
+        sender_id: currUser._id
       })
-      setMessages(prevMessages=>[...prevMessages,{email: user.email,message}])
+      setMessages(prevMessages=>[...prevMessages,{username:currUser.username,email: currUser.email,message}])
       setMessage('');
   }
    function writeAiMessage(message){
@@ -77,37 +82,60 @@ function Project(){
    }
 
   
-
+   const saveFileTree = (ft)=>{
+    axios.put('/api/project/update-file-tree',{
+       projectId: project._id,
+       fileTree: ft
+    })
+    .then((res)=>{
+      console.log(res);
+    })
+    .catch((error)=>{
+         console.log(error);
+    })
+    
+   }
    
   useEffect(()=>{
-     
+     console.log(project._id)
     initializeSocket(project._id);
+  //    if(!webContainer){
+  //   getWebContainer().then((container) => {
+  //       setWebContainer(container);
+  //       console.log('WebContainer Started');
+  //   });
+  // }
+
      recieveMessage('project-message',(data)=>{
       
+       
         
-        // if(data.fileTree){
-          // console.log(data.fileTree);
-          // console.log(typeof data.fileTree,"hello");
-          // setFileTree(data.fileTree);
-        //  setFileTree(data.fileTree );
-          
-        // }
-        const Inmessage = JSON.parse(data.message);
-        console.log(Inmessage);
+        
+        // webContainer?.mount(Inmessage.fileTree);
+    
+         if(data.email=='ai'){
+           const Inmessage = JSON.parse(data.message);
+            if(Inmessage.fileTree) setFileTree(Inmessage.fileTree);
+
+           setMessages(prev => [...prev, {message:Inmessage.text,username:'ai',email:'ai'}]);
+         }
+         else{
         setMessages(prev => [...prev, data]);
-       if(Inmessage.fileTree) setFileTree(Inmessage.fileTree);
+         }
+      
       // appendIncomingMessage(data);
      })
 
-    axios.get(`/project/get-project/${location.state.project._id}`)
+    axios.get(`/api/project/get-project/${location.state.project._id}`)
       .then((res)=>{
           setProject(res.data.project);
+          setFileTree(res.data.project.fileTree)
       })
       .catch((error)=>{
         console.log(error);
       })
     
-    axios.get('/users/all')
+    axios.get('/api/users/all')
       .then((res)=>{
         const allUsers = res.data.allUsers;
 
@@ -128,7 +156,7 @@ function Project(){
     messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
   },[messages]);
   
-  
+  console.log(project.users);
    return (
       <main className={`w-screen h-screen flex`}>
              <section className='left relative flex flex-col min-w-96 h-screen bg-slate-300'>
@@ -151,8 +179,8 @@ function Project(){
                             
                            {  messages.map((msg,index)=>(
                                 
-                                <div key={index} className={`flex flex-col gap-1 p-2 max-w-80 bg-slate-50 rounded-md  ${user.email===msg.email ? 'ml-auto' : 'mr-auto'}`}>
-                                <small className='text-sm opacity-70'>{msg.email}</small>
+                                <div key={index} className={`flex flex-col gap-1 p-2 max-w-80 bg-slate-50 rounded-md  ${currUser.email===msg.email ? 'ml-auto' : 'mr-auto'}`}>
+                                <small className='text-sm opacity-70'>{msg.username}</small>
 
                                    {msg.email === 'ai' ? (
       writeAiMessage(msg.message)  
@@ -190,21 +218,22 @@ function Project(){
                       <div className='flex flex-col p-2 gap-4'>
                         
                             {project.users && project.users.map((user)=>(
+                              
                               <div  key={user._id} className='flex gap-2 cursor-pointer hover:bg-slate-200 items-center'>
                                 <div className='bg-slate-700  relative aspect-square w-fit h-fit rounded-full p-4 flex justify-center items-center'>
                                  <i className='ri-user-fill text-white absolute'></i>
                                 </div>
-                                < h1 className='font-semibold text-lg'>{user.email}</h1>
+                                < h1 className='font-semibold text-lg'>{user.username}</h1>
                                 </div>
                             ))}
                       </div>
                   </div>
              </section>
 
-             <section className='right  bg-red-50 flex-grow h-full flex'>
+             <section className='right   flex-grow h-full flex'>
                <div className="explorer h-full max-w-64 min-w-52  bg-slate-200">
                    <div className='file-tree'>
-                    {
+                    {fileTree &&
                       Object.keys(fileTree).map((file,index)=>(
                       <div 
                       className='tree-element cursor-pointer p-2 bg-slate-300' 
@@ -220,33 +249,89 @@ function Project(){
                 
                {openFiles && ( 
                <div className='code-editor flex flex-col flex-grow'>
-                    <div className='top p-2 bg-red-200 flex gap-4'>
+                    
+                     
+                      <div className='flex'>
                     {openFiles.map((file,index)=>(
                          <button 
                           onClick={()=>setCurrentFile(file)}
-                          className='text-lg font-semibold '>{file}</button>
+                          className={`text-lg ${file==currentFile?'bg-slate-400':'bg-slate-200'} p-2 px-4 padding font-semibold `}>{file}</button>
                     ))}
                       </div>
+                      
+
+
+                      {/* <div className='bg-black p-2 px-4'>
+                           <button
+                           className='text-white font-semibold'
+                           onClick={async()=>{
+                             await webContainer?.mount(fileTree);
+
+                             const installProcess = await webContainer.spawn("npm",["install"]);
+                             installProcess.output.pipeTo(new WritableStream({
+                                  write(chunk){
+                                    console.log(chunk);
+                                  }
+                             }))
+
+                             if(runProcess){
+                              runProcess.kill();
+                             }
+                              const tempRunProcess = await webContainer.spawn("npm",["start"]);
+                            
+                             tempRunProcess.output.pipeTo(new WritableStream({
+                              write(chunk){
+                                console.log(chunk);
+                              }
+                             }))
+
+                             setRunProcess(tempRunProcess);
+                              webContainer.on('server-ready', (port, url) => {
+                                        console.log(port, url)
+                                        setIframeUrl(url)
+                                        
+                                    })
+
+
+                           }}
+                           >run</button>
+                      </div> */}
+                      
+
                     <div className='bottom flex flex-grow bg-white'>
-                    { fileTree[currentFile] && (
+                    { fileTree && fileTree[currentFile] && (
                       <textarea 
-   value={fileTree[currentFile].file.contents}
-   onChange={(e) => {
-     setFileTree(prev => ({
-       ...prev,
-       [currentFile]: {
-          file :{
-         contents: e.target.value
-          },
-       }
-     }));
-   }}
-   className='w-full h-full '
-/>
+                       value={fileTree[currentFile].file.contents}
+                      className='w-full h-full'
+                      onChange={(e)=>{
+                        const updatedContent = e.target.value;
+                        const ft = {...fileTree,
+                            [currentFile]:{
+                              file: {
+                                contents: updatedContent
+                              }
+                            }
+                        } 
+                        setFileTree(ft);
+                        saveFileTree(ft);
+                      }}
+                      
+                      />
                      )}
                     </div>
                </div>
                )}
+
+                {/* {iframeUrl && webContainer &&
+                    (<div className="flex min-w-96 flex-col h-full">
+                        <div className="address-bar">
+                            <input type="text"
+                                onChange={(e) => setIframeUrl(e.target.value)}
+                                value={iframeUrl} className="w-full p-2 px-4 bg-slate-200" />
+                        </div>
+                        <iframe src={iframeUrl} className="w-full h-full"></iframe>
+                    </div>)
+                } */}
              </section>
 
              {isModalOpen && (
@@ -272,7 +357,7 @@ function Project(){
                         <div className="bg-slate-700 relative aspect-square w-fit h-fit rounded-full p-4 flex justify-center items-center">
                        <i className="ri-user-fill text-white absolute"></i>
                        </div>
-                        <p className="font-semibold text-lg">{user.email}</p>
+                        <p className="font-semibold text-lg">{user.username}</p>
                       </li>
                      ))}
                           </ul>

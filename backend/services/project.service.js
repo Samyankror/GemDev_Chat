@@ -1,13 +1,14 @@
 import projectModel from "../models/project.model.js";
 import mongoose from "mongoose";
+import { errorHandler } from "../utils/errorHandler.js";
 
 export const createProject = async({name,userId})=>{
    if(!name){
-    throw new Error('Name is required');
+    return errorHandler(400,'name is required')
    }
 
    if(!userId){
-     throw new Error('UserId is required');
+     return errorHandler(400,'User Id  is required')
    }
   
      const  project =  projectModel.create({name,users:[userId]});
@@ -87,4 +88,32 @@ export const getProject = async({projectId})=>{
  
     return project;
       
+}
+
+export const updateFileTree = async({projectId,fileTree})=>{
+
+     if (!projectId) {
+        throw new Error("projectId is required")
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+        throw new Error("Invalid projectId")
+    }
+
+    if (!fileTree) {
+        throw new Error("fileTree is required")
+    }
+
+    const project = await projectModel.findByIdAndUpdate(
+                {
+                  _id: projectId
+                },
+                {
+                  fileTree
+                },{
+                  new: true
+                }
+              )
+
+              return project;
 }
