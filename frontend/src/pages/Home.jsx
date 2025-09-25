@@ -1,82 +1,102 @@
 import { useState } from 'react';
-import axios from '../config/axios.js';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../utils/fetchWithAuth.js';
+
 
 
 function Home(){
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [projectName,setProjectName] = useState('');
       const [projects,setProjects] = useState(null);
-      const [error,setError] = useState(null);
+      const [description, setDescription] = useState('');
+      const [error,setError] = useState('');
        const navigate = useNavigate();
 
       
-  //     const createProject = (e)=>{
-  //          e.preventDefault();
-  //          axios.post('/api/project/create',
-  //           {name : projectName})
-  //            .then((res)=>{
-  //                 setIsModalOpen(false);
-  //            })
-  //            .catch((error)=>{
-  //                setIsModalOpen(false);
-  //            })
-  //             setProjectName('');
-  //     }
-   useEffect(()=>{
-         axios.get('/api/project/all')
-              .then((res)=>{
-                setProjects(res.data.projects);
-              })
-              .catch((error)=>{
-                   setError(error);
-              })
-      },[])
-   
     const createProject = async(e)=>{
       e.preventDefault();
       try{
-      const res = await fetch('/api/project/create',{
+      const data = await fetchWithAuth('/api/project/create',{
                    method:'POST',
             headers : {
            "Content-Type" : "application/json",
             },
-            body:JSON.stringify({name: projectName})
+            body:JSON.stringify({name: projectName, description})
       })
 
-      const data = await res.json();
-      console.log(data);
+      if(data.success){
+        setIsModalOpen(false);
+        setError('');
+        setProjectName('');
+      setDescription('');
+      setProjects(prev=>[...prev,data.newProject]);
+      }
+      else{
+       setError(data.message);
+      }
     }catch(error){
-      console.log("hello");
+      setError(error.message);
     }
     }
+
+    useEffect(()=>{
+         
+        const getAllProjects = async()=>{
+
+          try{
+              const data = await fetchWithAuth('/api/project/all');
+              if(data.success){
+                setProjects(data.projects);
+              }
+           } catch(error){
+
+           } 
+          }
+          getAllProjects();
+      },[])
    
   
     return (
-         <main className='p-4'>
+         <main className='px-16 py-2'>
+          <header className='flex  justify-between border-b-3 border-b-indigo-200  pb-2'>
+            <h1 className='text-4xl font font-semibold'>My Dashboard</h1>
           <div className='flex  gap-6'>
             <button 
-            className='p-4 border-slate-300 text-xl border-2 rounded-md font-semibold cursor-pointer'
+            className='p-2 bg-slate-200 text-2xl  rounded-md font-semibold cursor-pointer'
             onClick={()=>setIsModalOpen(true)}>
               New Project
             <i className="ri-link"></i>
             </button>
+             <button
+              className=' px-4 py-2 bg-slate-200 text-2xl rounded-md font-semibold cursor-pointer'
+              >
+              Profile
+             </button>
+            
+            </div>
+            </header>
 
-            {projects &&
-              projects.map((project)=>(<div 
+           {projects &&  (<div className='pt-6'>
+              <h2 className='text-3xl font-semibold '>My Projects</h2>
+              <div className='py-4 flex gap-6'>
+              {projects.map((project)=>(<div 
                key={project._id}
-               className='min-w-52 p-4 text-xl border-slate-300 border-2 rounded-md font-semibold cursor-pointer hover:bg-slate-200'
+               className='w-80 p-4 text-xl border-slate-300 border-2 rounded-md font-semibold cursor-pointer hover:bg-slate-200'
                onClick={()=>navigate('project',{state : {project}})}
              >
               <h2>{project.name}   </h2>
-               <div>
+              <p className='break-words'>{project.description}</p>
+               <div className='pt-1'>
                   <p> <small> <i className="ri-user-line"></i> Collaborators</small> : {project.users.length}</p>
                 </div>          
             </div>
             ))}
+            </div>
+            </div>
+)}
 
-          </div>
+          
 
           
               
@@ -95,6 +115,16 @@ function Home(){
                     placeholder='Enter project name...'
                     onChange={(e)=>setProjectName(e.target.value)}
                     />
+                    <label htmlFor="description" className='text-[20px] font-semibold text-slate-500'>Description</label>
+                    <input 
+                    className=" p-3 bg-white  rounded-lg  outline-blue-400 focus:outline-[2px] "
+                    type="text"
+                    id="description"
+                    value={description}
+                    placeholder='Describe your project in 10-15 words'
+                    onChange={(e)=>setDescription(e.target.value)}
+                    />
+                   
                     </div>
                     <div className='flex gap-6 justify-center'>
                     <button 
@@ -102,6 +132,7 @@ function Home(){
                     onClick={()=>{
                       setIsModalOpen(false);
                       setProjectName('');
+                      
                     }}
                     className='py-2 px-4 bg-slate-500 rounded-lg text-white cursor-pointer font-semibold text-xl'
                     >
@@ -112,6 +143,7 @@ function Home(){
                      className='py-2 px-4 bg-blue-400 rounded-lg cursor-pointer text-white font-semibold text-xl'>Create</button>
                     </div>
                      </form>
+                     {error && <p className='text-red-700 mt-2'>{error}</p>}
                   </div>
                 </div>
               )}

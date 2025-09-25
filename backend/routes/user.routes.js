@@ -24,7 +24,7 @@ router.post(
   userController.loginController
 );
 
-router.get('/getAccess',userController.generteNewAccessToken)
+router.get('/getAccess',userController.generateNewAccessToken)
 router.get("/profile", authUser, userController.profileController);
 router.get("/logout", authUser, userController.logoutController);
 router.get("/all", authUser, userController.getAllUserController);

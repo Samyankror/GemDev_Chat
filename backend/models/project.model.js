@@ -9,6 +9,11 @@ const projectSchema = new mongoose.Schema({
         trim: true,
         unique: true
     },
+    description : {
+        type: String,
+        trime: true,
+        require: true
+    },
     users : [
         {
             type : mongoose.Schema.Types.ObjectId,

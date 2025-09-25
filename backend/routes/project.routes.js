@@ -7,6 +7,10 @@ router.post(
   "/create",
   authUser,
   body("name").isString(),
+  body("description")
+  .isString()
+  .isLength({min:20, max:150})
+  .withMessage('Description must be between 10 and 150 characters long'),
   projectController.createProject
 );
 

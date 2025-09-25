@@ -19,7 +19,10 @@ const userSchema = new mongoose.Schema({
     },
     password: {
        type: String,
-    }
+    },
+    refreshToken: {
+        type: String
+    },
 },
  {
     timestamps: true

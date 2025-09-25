@@ -2,16 +2,21 @@ import projectModel from "../models/project.model.js";
 import mongoose from "mongoose";
 import { errorHandler } from "../utils/errorHandler.js";
 
-export const createProject = async({name,userId})=>{
+export const createProject = async({name, description, userId})=>{
    if(!name){
-    return errorHandler(400,'name is required')
+    return errorHandler(400,'Name is required')
+   }
+
+   if(!description){
+    return errorHandler(400,'Description is required')
    }
 
    if(!userId){
      return errorHandler(400,'User Id  is required')
    }
+   
   
-     const  project =  projectModel.create({name,users:[userId]});
+     const  project =  projectModel.create({name, description, users:[userId]});
      return project;
    }
    

@@ -4,7 +4,7 @@ import { validationResult } from "express-validator";
 import * as projectService from "../services/project.service.js";
 import { errorHandler } from "../utils/errorHandler.js";
 
-export const createProject = async (req, res) => {
+export const createProject = async (req, res,next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
       const firstError = errors.array()[0];
@@ -13,11 +13,11 @@ export const createProject = async (req, res) => {
 
   try {
    
-    const { name } = req.body;
+    const { name, description } = req.body;
     const loggedInUser = await userModel.findOne({ email: req.user.email });
     const userId = loggedInUser._id;
-    const newProject = await projectService.createProject({ name, userId });
-    return res.status(201).json(newProject);
+    const newProject = await projectService.createProject({ name, description,userId });
+    return res.status(201).json({success: true,newProject});
   } catch (error) {
     next(error);
   }
@@ -33,7 +33,7 @@ export const getAllProject = async (req, res) => {
       userId: loggedInUser.id,
     });
      
-    return res.status(200).json({ projects: allProjects });
+    return res.status(200).json({success:true, projects: allProjects });
   } catch (error) {
       next(error);
   }

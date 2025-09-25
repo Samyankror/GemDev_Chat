@@ -2,7 +2,7 @@ import userModel from "../models/user.model.js";
 import * as userService from "../services/user.services.js";
 import {validationResult} from 'express-validator'; 
 import { errorHandler } from "../utils/errorHandler.js";
-
+import jwt from 'jsonwebtoken';
 
 export const createUserController = async(req,res,next)=>{
          
@@ -98,7 +98,7 @@ export const logoutController = async(req,res,next)=>{
     }
 }
 
-export const generteNewAccessToken= async(req,res,next)=>{
+export const generateNewAccessToken= async(req,res,next)=>{
      const incomingRefreshToken = req.cookies.refreshToken;
       if (!incomingRefreshToken) {
     return next(errorHandler(401, "unauthorized request"));
@@ -107,11 +107,11 @@ export const generteNewAccessToken= async(req,res,next)=>{
   try{
      const decodedToken = jwt.verify(incomingRefreshToken,process.env.JWT_SECRET)
      const user = await userModel.findOne({email:decodedToken?.email});
-
+    
        if (!user) {
       return next(errorHandler(401, "Invalid refresh token"));
     }
-
+      console.log(incomingRefreshToken,user.refreshToken);
     if(incomingRefreshToken!==user.refreshToken){
         return next(errorHandler(401, "refresh token is expired or used"));
     }

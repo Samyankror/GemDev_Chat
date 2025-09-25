@@ -1,7 +1,7 @@
 import { signOutSuccess } from "../redux/user/userSlice";
-import { useDispatch } from "react-redux";
-
+import { store } from "../redux/store";
 export const fetchWithAuth = async(url,options={})=>{
+  
     try{
         let res = await fetch(url,options);
         
@@ -14,7 +14,8 @@ export const fetchWithAuth = async(url,options={})=>{
               res = await fetch(url,options);
          }
          else{
-            dispatch(signOutSuccess());
+          console.log(res);
+            store.dispatch(signOutSuccess());
             return null;
          }
 
