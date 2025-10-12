@@ -1,16 +1,21 @@
 import { Router } from "express";
-import { authUser } from '../middleware/auth.middleware.js'
+import { authUser } from "../middleware/auth.middleware.js";
 import { body } from "express-validator";
-import * as projectController from '../controllers/project.controller.js'
+import * as projectController from "../controllers/project.controller.js";
 const router = Router();
 router.post(
   "/create",
   authUser,
-  body("name").isString(),
+  body("name")
+    .trim()                     
+    .isString()
+    .notEmpty()
+    .withMessage("Name is required"),
   body("description")
-  .isString()
-  .isLength({min:20, max:150})
-  .withMessage('Description must be between 10 and 150 characters long'),
+     .trim() 
+    .isString()
+    .isLength({ min: 10, max: 150 })
+    .withMessage("Description must be between 10 and 150 characters long"),
   projectController.createProject
 );
 
@@ -30,10 +35,18 @@ router.get(
   projectController.getProjectById
 );
 
-router.put('/update-file-tree',
-        authUser,
-        body('projectId').isString().withMessage('Project Id is required'),
-         body('fileTree').isObject().withMessage('File tree is required'),
-         projectController.updateFileTree
-)
+router.put(
+  "/update-file-tree",
+  authUser,
+  body("projectId").isString().withMessage("Project Id is required"),
+  body("fileTree").isObject().withMessage("File tree is required"),
+  projectController.updateFileTree
+);
+router.delete(
+  "/remove-user",
+  authUser,
+  body("projectId").isString().withMessage("Project Id is required"),
+  body("userId").isString().withMessage("user Id is required"),
+  projectController.removeUser
+);
 export default router;

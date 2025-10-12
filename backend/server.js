@@ -9,6 +9,7 @@ import projectModel from './models/project.model.js';
 import userModel from './models/user.model.js';
 import { generateContent } from './services/ai.service.js';
 import cookie  from 'cookie';
+// import cors from 'cors';
 
 
 
@@ -26,19 +27,19 @@ const io = new Server(server,{
 
 io.use(async(socket,next)=>{
     try{
-    //   const token = socket.handshake.auth?.accessToken || socket.handshake.headers.authorization?.split(' ')[1];
+     console.log("hello");
     const cookies = cookie.parse(socket.handshake.headers.cookie || "");
     const token = cookies.accessToken;
        const projectId = socket.handshake.query.projectId;
 
        if(!mongoose.Types.ObjectId.isValid(projectId)){
-             return next(new Error('Invalid projectId'));
+             return next(errorHandler(400,'Invalid projectId'));
        }
 
          socket.project = await projectModel.findById(projectId);
 
       if(!token){
-        return next(new Error('Authentication error'));
+        return next(errorHandler(400,'Authentication error'));
       }
        
       
@@ -47,18 +48,22 @@ io.use(async(socket,next)=>{
       socket.user = decoded;
       next();
     }catch(error){
-        console.log("jeo")
         next(error);
     }
 })
 
 io.on('connection',async(socket)=>{
     console.log('a user connected');
-    socket.roomId  = socket.project._id.toString()
+    if (!socket.project) {
+    console.log("❌ No project found for this socket");
+  }
+    socket.roomId  = socket?.project._id.toString()
     socket.join(socket.roomId);
 
     socket.on('project-message',async(data)=>{
-        console.log(data);
+
+        const user = await userModel.findById(data.sender_id)
+        socket.broadcast.to(socket.roomId).emit('project-message',{message:data.message,username:user.username,email:user.email});
         const message = data.message
         const isAiPresentInMessage = message.includes('@ai');
         if(isAiPresentInMessage){
@@ -69,9 +74,7 @@ io.on('connection',async(socket)=>{
            io.to(socket.roomId).emit('project-message',{message: result,username:'ai',email:'ai'})
            return;
         }
-
-        const user = await userModel.findById(data.sender_id)
-        socket.broadcast.to(socket.roomId).emit('project-message',{message:data.message,username:user.username,email:user.email});
+        
     })
 
     socket.on('disconnect',()=>{

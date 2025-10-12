@@ -1,114 +1,180 @@
 
-import { GoogleGenerativeAI} from "@google/generative-ai";
+// import { GoogleGenerativeAI} from "@google/generative-ai";
 
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY);
+// const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+// const model = genAI.getGenerativeModel({
+//     model: "gemini-1.5-pro",
+//     generationConfig: {
+//         responseMimeType: "application/json",
+//         temperature: 0.4,
+//     },
+//     systemInstruction: `
+// You are a highly intelligent and versatile AI assistant capable of helping users with any kind of task — from explaining concepts and solving problems to writing, coding, or generating creative content.
+
+// Your output format must always be a **JSON object** with these top-level keys:
+
+// {
+//   "text": "A clear and concise explanation, answer, or response in plain text.",
+//   "fileTree": {
+//     // Only include this section when the user request involves code, project setup, or file creation.
+//     // Represent each file and folder in a structured JSON format:
+//     // "filename": { "file": { "contents": "<actual code or content>" } }
+//   },
+// }
+
+// Guidelines:
+// - Always provide meaningful and clear explanations inside "text".
+// - If the user asks for code, generate it inside "fileTree" using best practices, modular structure, error handling, and maintainability.
+// - Include comments inside the code where appropriate.
+// - Never break or overwrite previously working code unless the user explicitly requests.
+// - Do NOT use filenames like "routes/index.js"; prefer descriptive names.
+// - If the user’s request doesn’t involve code, respond only with the "text" key.
+
+// Examples:
+
+// <example>
+// user: "Create a simple Express app"
+
+// response: {
+//   "text": "Here is a simple Express server setup using best practices.",
+//   "fileTree": {
+//     "app.js": {
+//       "file": {
+//         "contents": "
+//         import express from 'express';
+
+//         const app = express();
+
+//         app.get('/', (req, res) => {
+//           res.send('Hello World!');
+//         });
+
+//         app.listen(3000, () => {
+//           console.log('Server running on port 3000');
+//         });
+//         "
+//       }
+//     },
+//     "package.json": {
+//       "file": {
+//         "contents": "
+//         {
+//           "name": "simple-server",
+//           "version": "1.0.0",
+//           "main": "app.js",
+//           "dependencies": {
+//             "express": "^4.21.2"
+//           }
+//         }
+//         "
+//       }
+//     }
+//   },
+//   "buildCommand": { "mainItem": "npm", "commands": ["install"] },
+//   "startCommand": { "mainItem": "node", "commands": ["app.js"] }
+// }
+// </example>
+
+// <example>
+// user: "Hello"
+
+// response: {
+//   "text": "Hello! How can I assist you today?"
+// }
+// </example>
+
+// <example>
+// user: "Explain what is React.js"
+
+// response: {
+//   "text": "React.js is a popular JavaScript library developed by Meta for building interactive and dynamic user interfaces..."
+// }
+// </example>
+// `
+
+// });
+
+// // export const generateContent = async(prompt) => {
+// //      console.log(process.env.GOOGLE_API_KEY);
+// //     const result = await model.generateContent(prompt);
+// //      //const text = result.response.text();
+// //        console.log(result);
+
+// //     return "";
+// //    // return result.response.text()
+// // }
+// export const generateContent = async (prompt) => {
+//   try {
+//     console.log("Using API Key:", process.env.GOOGLE_API_KEY);
+
+//     // ✅ Step 1: Generate content
+//     const result = await model.generateContent(prompt);
+
+//     // ✅ Step 2: Extract text or JSON safely
+//     const response = await result.response;
+//     const text = response.text();
+
+//     console.log("Model output:", text);
+
+//     // ✅ Step 3: Return it
+//     return text;
+//   } catch (error) {
+//     console.error("❌ Error generating content:", error);
+//     return { error: error.message };
+//   }
+// };
+
+// generateContent.js
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import 'dotenv/config';
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
 const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash-lite",
-    generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.4,
-    },
-    systemInstruction: `You are an expert in MERN and Development. You have an experience of 10 years in the development. You always write code in modular and break the code in the possible way and follow best practices, You use understandable comments in the code, you create files as needed, you write code while maintaining the working of previous code. You always follow the best practices of the development You never miss the edge cases and always write code that is scalable and maintainable, In your code you always handle the errors and exceptions.
-    
-    Examples: 
+  model: "models/gemini-2.5-pro",
+  generationConfig: {
+    responseMimeType: "application/json",
+    temperature: 0.4,
+  },
+  systemInstruction: `
+You are a highly intelligent and versatile AI assistant capable of helping users with any kind of task — from explaining concepts and solving problems to writing, coding, or generating creative content.
 
-    <example>
- 
-    response: {
+Your output format must always be a **JSON object** with these top-level keys:
 
-    "text": "this is you fileTree structure of the express server",
-    "fileTree": {
-        "app.js": {
-            file: {
-                contents: "
-                const express = require('express');
-
-                const app = express();
-
-
-                app.get('/', (req, res) => {
-                    res.send('Hello World!');
-                });
-
-
-                app.listen(3000, () => {
-                    console.log('Server is running on port 3000');
-                })
-                "
-            
-        },
-    },
-
-        "package.json": {
-            file: {
-                contents: "
-
-                {
-                    "name": "temp-server",
-                    "version": "1.0.0",
-                    "main": "index.js",
-                    "scripts": {
-                        "test": "echo \"Error: no test specified\" && exit 1"
-                    },
-                    "keywords": [],
-                    "author": "",
-                    "license": "ISC",
-                    "description": "",
-                    "dependencies": {
-                        "express": "^4.21.2"
-                    }
+{
+  "text": "A clear and concise explanation, answer, or response in plain text.",
+  "fileTree": {
+    // Only include this section when the user request involves code, project setup, or file creation.
+  },
 }
 
-                
-                "
-                
-                
-
-            },
-
-        },
-
-    },
-    "buildCommand": {
-        mainItem: "npm",
-            commands: [ "install" ]
-    },
-
-    "startCommand": {
-        mainItem: "node",
-            commands: [ "app.js" ]
-    }
-}
-
-    user:Create an express application 
-   
-    </example>
-
-
-    
-       <example>
-
-       user:Hello 
-       response:{
-       "text":"Hello, How can I help you today?"
-       }
-       
-       </example>
-    
- IMPORTANT : don't use file name like routes/index.js
-       
-       
-    `
+Guidelines:
+- Always provide meaningful and clear explanations inside "text".
+- If the user asks for code, generate it inside "fileTree" using best practices, modular structure, error handling, and maintainability.
+- Include comments inside the code where appropriate.
+- Never break or overwrite previously working code unless the user explicitly requests.
+- Do NOT use filenames like "routes/index.js"; prefer descriptive names.
+- If the user’s request doesn’t involve code, respond only with the "text" key.
+`
 });
 
-export const generateContent = async(prompt) => {
+export const generateContent = async (prompt) => {
+  try {
+    console.log("Using API Key:", process.env.GOOGLE_API_KEY);
 
+    // Generate AI response
     const result = await model.generateContent(prompt);
-     const text = result.response.text();
-    console.log("Type of text:", typeof text); // should log "string"
-    console.log("Value of text:", text);
+
+    // Extract text safely
+    const response = await result.response;
+    const text = response.text();
+
+    console.log("Model output:", text);
 
     return text;
-   // return result.response.text()
-}
+  } catch (error) {
+    console.error("❌ Error generating content:", error);
+    return { error: error.message };
+  }
+};

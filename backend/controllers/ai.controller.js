@@ -1,6 +1,6 @@
 import { generateContent } from "../services/ai.service.js"
 
-export const getResult = async(req,res)=>{
+export const getResult = async(req,res,next)=>{
     try{
      const {prompt} = req.query;
      const result = await generateContent(prompt);
